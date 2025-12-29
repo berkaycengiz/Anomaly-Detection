@@ -1,9 +1,6 @@
 import express from 'express';
-import {getAnomalyById, getAnomalies, createAnomaly, updateAnomaly } from '../db/anomalies';
+import {getAnomalyById, getAnomalies, createAnomaly} from '../db/anomalies';
 import { uploadFromBuffer } from '../helpers/cloudinaryHelper';
-import { extractPublicIdFromUrl } from '../helpers/cloudinaryURLHelper';
-import { cloudinary } from '../config/cloudinaryConfig';
-
 
 export const getAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
@@ -21,10 +18,6 @@ export const getAnomaly = async (req: express.Request, res: express.Response): P
 
 export const newAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
-        if (!req.file) {
-            return res.status(400).json({ message: "Supported formats: PNG, JPG, JPEG, BMP."});
-        }
-
         let photoUrl = "";
 
         if (req.file) {
@@ -32,9 +25,12 @@ export const newAnomaly = async (req: express.Request, res: express.Response): P
             const result = await uploadFromBuffer(req.file.buffer, options);
             photoUrl = result.secure_url;
         }
+        else {
+            return res.status(400).json({ message: "Supported formats: PNG, JPG, JPEG, BMP."});
+        }
 
         const post = await createAnomaly({
-            photo: photoUrl,
+            originalUrl: photoUrl,
           });
 
         return res.status(200).json(post);
@@ -57,23 +53,28 @@ export const getAllAnomalies = async (req: express.Request, res: express.Respons
     }
 };
 
-export const updatePost = async (req: express.Request, res: express.Response): Promise<any> => {
+export const updateAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
         const {id} = req.params;
+        const { processedUrl, isAnomaly } = req.body;
 
         const anomaly = await getAnomalyById(id);
 
-        if(){
-
+        if (!anomaly) {
+            return res.status(404).json({ message: "Record not found." });
         }
 
-        else{
-            return res.status(400).json({ message: "The description is already the same." });
+        if (processedUrl !== undefined) {
+            anomaly.processedUrl = processedUrl;
         }
 
-        await post.save();
+        if (isAnomaly !== undefined) {
+            anomaly.isAnomaly = isAnomaly;
+        }
+
+        await anomaly.save();
         
-        return res.status(200).json(post).end();
+        return res.status(200).json(anomaly).end();
     }
     catch(error){
         console.log(error);

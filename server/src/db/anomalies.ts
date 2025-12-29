@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const AnomalySchema = new mongoose.Schema({
     originalUrl: {type: String, required: true},
     processedUrl: {type: String, default: null},
-    anomaly: {type: Boolean, },
+    isAnomaly: {type: Boolean, default: null},
 }, {timestamps: true});
 
 export const AnomalyModel = mongoose.model('Anomaly', AnomalySchema);
