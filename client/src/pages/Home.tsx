@@ -15,7 +15,6 @@ const Home: React.FC = () => {
     const container = containerRef.current;
 
     if (container && targetRef.current) {
-      // Disable snapping during programmatic scroll to prevent conflict
       setIsSnapping(false);
 
       const top = targetRef.current.offsetTop;
@@ -28,7 +27,6 @@ const Home: React.FC = () => {
           container.scrollTop = latest;
         },
         onComplete: () => {
-          // Re-enable snapping after the scroll animation is properly finished
           setIsSnapping(true);
         }
       });
@@ -38,7 +36,6 @@ const Home: React.FC = () => {
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, offsetHeight } = e.currentTarget;
-    // Simple toggle logic based on scroll position
     if (scrollTop > offsetHeight / 2) {
       setActiveTab('HISTORY');
     } else {
@@ -50,21 +47,21 @@ const Home: React.FC = () => {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className={`h-screen overflow-y-auto bg-linear-to-b from-background from-40% to-[#3D3D3D] bg-local ${isSnapping ? 'snap-y snap-mandatory' : ''}`}
+      className={`h-screen overflow-y-auto bg-linear-to-t from-background from-0% to-[#242323] bg-local ${isSnapping ? 'snap-y snap-mandatory' : ''}`}
     >
 
       <Sidebar activeTab={activeTab} onNavigate={handleNavigate} />
 
-      <div className="fixed left-0 top-0 h-full w-24 flex items-center justify-center pointer-events-none z-10">
+      <div className="fixed h-full w-10 md:w-14 xl:w-22 flex items-center justify-end pointer-events-none z-10">
         <div className="rotate-180 [writing-mode:vertical-lr] flex items-center justify-center">
           <AnimatePresence mode='wait'>
             <motion.h2
               key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -40 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="font-heading font-black text-6xl text-text tracking-tighter uppercase whitespace-nowrap"
+              className="font-heading font-black text-4xl text-highlight/80 tracking-tighter uppercase whitespace-nowrap md:text-5xl xl:text-6xl"
             >
               {activeTab === 'CHECK' ? 'Anomaly Check' : 'Anomaly History'}
             </motion.h2>
@@ -74,7 +71,7 @@ const Home: React.FC = () => {
 
       <section
         ref={checkRef}
-        className="h-screen w-full flex items-center justify-center pl-24 pr-24 snap-start"
+        className="h-screen w-full flex items-center justify-center pl-13 pr-13 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 snap-start"
       >
         <div className="w-full max-w-5xl">
           <div className="bg-primary aspect-video rounded-sm border border-zinc-800 shadow-2xl flex items-center justify-center relative group">
@@ -86,12 +83,9 @@ const Home: React.FC = () => {
 
       <section
         ref={historyRef}
-        className="h-screen w-full flex items-center justify-center pl-32 pr-20 snap-start"
+        className="h-screen w-full flex items-center justify-center pl-13 pr-13 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 snap-start"
       >
         <div className="w-full max-w-5xl">
-          <h1 className="text-secondary font-heading text-4xl font-black uppercase italic mb-10">Archive_Logs</h1>
-
-          {/* History Grid Örneği */}
           <div className="grid grid-cols-2 gap-8 w-full">
             <div className="h-48 bg-primary rounded-sm border border-zinc-800 flex items-center justify-center">
               <span className="text-zinc-700 font-mono text-xs italic">Record_001.data</span>
