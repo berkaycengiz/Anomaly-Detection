@@ -11,6 +11,27 @@
     --color-error: #F43F5E;
 }
 
+@layer base {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+scrollbar-width: none !important;
+
+    /* Internet Explorer ve eski Edge */
+    -ms-overflow-style: none !important;
+
+    /* Mobil Chrome/Safari için ek önlem */
+    -webkit-overflow-scrolling: touch;
+    -webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  }
+}
+
 body{
     font-family: var(--font-body);
 }

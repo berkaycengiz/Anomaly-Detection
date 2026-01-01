@@ -6,11 +6,14 @@ const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CHECK' | 'HISTORY'>('CHECK');
   const [isSnapping, setIsSnapping] = useState(true);
 
+  const isNavigating = useRef(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const checkRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
   const handleNavigate = (target: 'CHECK' | 'HISTORY') => {
+    isNavigating.current = true;
     const targetRef = target === 'CHECK' ? checkRef : historyRef;
     const container = containerRef.current;
 
@@ -28,6 +31,9 @@ const Home: React.FC = () => {
         },
         onComplete: () => {
           setIsSnapping(true);
+          setTimeout(() => {
+            isNavigating.current = false;
+          }, 100);
         }
       });
     }
@@ -35,6 +41,8 @@ const Home: React.FC = () => {
   };
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isNavigating.current) return;
+
     const { scrollTop, offsetHeight } = e.currentTarget;
     if (scrollTop > offsetHeight / 2) {
       setActiveTab('HISTORY');
@@ -47,12 +55,12 @@ const Home: React.FC = () => {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className={`h-screen overflow-y-auto bg-linear-to-t from-background from-0% to-[#242323] bg-local ${isSnapping ? 'snap-y snap-mandatory' : ''}`}
+      className={`h-dvh overflow-y-auto bg-linear-to-t no-scrollbar from-background from-0% to-[#242323] bg-local ${isSnapping ? 'snap-y snap-mandatory' : ''}`}
     >
 
       <Sidebar activeTab={activeTab} onNavigate={handleNavigate} />
 
-      <div className="fixed h-full w-10 md:w-14 xl:w-22 flex items-center justify-end pointer-events-none z-10">
+      <div className="fixed h-full w-16 md:w-24 xl:w-32 flex items-center justify-center pointer-events-none z-10">
         <div className="rotate-180 [writing-mode:vertical-lr] flex items-center justify-center">
           <AnimatePresence mode='wait'>
             <motion.h2
@@ -60,7 +68,7 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -40 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
               className="font-heading font-black text-4xl text-highlight/80 tracking-tighter uppercase whitespace-nowrap md:text-5xl xl:text-6xl"
             >
               {activeTab === 'CHECK' ? 'Anomaly Check' : 'Anomaly History'}
@@ -71,7 +79,7 @@ const Home: React.FC = () => {
 
       <section
         ref={checkRef}
-        className="h-screen w-full flex items-center justify-center pl-13 pr-13 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 snap-start"
+        className="h-dvh w-full flex items-center justify-center pl-18 pr-18 md:pl-24 md:pr-24 xl:pl-32 xl:pr-32 snap-start"
       >
         <div className="w-full max-w-5xl">
           <div className="bg-primary aspect-video rounded-sm border border-zinc-800 shadow-2xl flex items-center justify-center relative group">
@@ -83,7 +91,7 @@ const Home: React.FC = () => {
 
       <section
         ref={historyRef}
-        className="h-screen w-full flex items-center justify-center pl-13 pr-13 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 snap-start"
+        className="h-dvh w-full flex items-center justify-center pl-18 pr-18 md:pl-24 md:pr-24 xl:pl-32 xl:pr-32 snap-start"
       >
         <div className="w-full max-w-5xl">
           <div className="grid grid-cols-2 gap-8 w-full">
