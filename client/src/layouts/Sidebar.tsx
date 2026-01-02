@@ -28,6 +28,7 @@ export const Sidebar = ({ activeTab, onNavigate }: SidebarProps) => {
           onClick={() => onNavigate('CHECK')}
           disabled={isAnimating === true}
           className="flex-1 z-10 w-full flex items-center justify-center relative cursor-pointer"
+          tabIndex={-1}
         >
           <FaSearch className={`transition-colors duration-600 ${activeTab === 'CHECK' ? 'text-white' : 'text-white/20'}`}></FaSearch>
         </button>
@@ -36,6 +37,7 @@ export const Sidebar = ({ activeTab, onNavigate }: SidebarProps) => {
           onClick={() => onNavigate('HISTORY')}
           disabled={isAnimating === true}
           className="flex-1 z-10 w-full flex items-center justify-center relative cursor-pointer"
+          tabIndex={-1}
         >
           <FaHistory className={`transition-colors duration-600 ${activeTab === 'HISTORY' ? 'text-white' : 'text-white/20'}`}></FaHistory>
         </button>
