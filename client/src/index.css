@@ -17,12 +17,10 @@
   }
 
   .no-scrollbar {
-scrollbar-width: none !important;
+    scrollbar-width: none !important;
 
-    /* Internet Explorer ve eski Edge */
     -ms-overflow-style: none !important;
 
-    /* Mobil Chrome/Safari için ek önlem */
     -webkit-overflow-scrolling: touch;
     -webkit-scrollbar {
       display: none !important;

@@ -1,6 +1,7 @@
 import express from 'express';
-import {getAnomalyById, getAnomalies, createAnomaly} from '../db/anomalies';
+import {getAnomalyById, getAnomalies, createAnomaly, updateAnomaly} from '../db/anomalies';
 import { uploadFromBuffer } from '../helpers/cloudinaryHelper';
+import { UploadApiOptions } from 'cloudinary';
 
 export const getAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
@@ -18,22 +19,25 @@ export const getAnomaly = async (req: express.Request, res: express.Response): P
 
 export const newAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
-        let photoUrl = "";
+        let videoUrl = "";
+        let videoName = "";
 
         if (req.file) {
-            const options = {folder: 'anomaly-pics'}
+            videoName = req.file.originalname;
+            const options: UploadApiOptions = {folder: 'anomaly-videos', resource_type: 'video'};
             const result = await uploadFromBuffer(req.file.buffer, options);
-            photoUrl = result.secure_url;
+            videoUrl = result.secure_url;
         }
         else {
-            return res.status(400).json({ message: "Supported formats: PNG, JPG, JPEG, BMP."});
+            return res.status(400).json({ message: "Supported formats: mp4."});
         }
 
-        const post = await createAnomaly({
-            originalUrl: photoUrl,
-          });
+        const anomaly = await createAnomaly({
+            originalUrl: videoUrl,
+            videoName: videoName,
+        });
 
-        return res.status(200).json(post);
+        return res.status(200).json(anomaly);
     }
     catch(error){
         console.log(error);
@@ -53,28 +57,18 @@ export const getAllAnomalies = async (req: express.Request, res: express.Respons
     }
 };
 
-export const updateAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
+export const patchAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
         const {id} = req.params;
-        const { processedUrl, isAnomaly } = req.body;
+        const values = req.body;
 
-        const anomaly = await getAnomalyById(id);
+        const updatedRecord = await updateAnomaly(id, values);
 
-        if (!anomaly) {
-            return res.status(404).json({ message: "Record not found." });
+        if (!updatedRecord) {
+            return res.status(404).json({ message: "Anomaly not found." });
         }
 
-        if (processedUrl !== undefined) {
-            anomaly.processedUrl = processedUrl;
-        }
-
-        if (isAnomaly !== undefined) {
-            anomaly.isAnomaly = isAnomaly;
-        }
-
-        await anomaly.save();
-        
-        return res.status(200).json(anomaly).end();
+        return res.status(200).json(updatedRecord);
     }
     catch(error){
         console.log(error);

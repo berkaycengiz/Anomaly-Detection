@@ -3,8 +3,9 @@ const { Schema } = mongoose;
 
 const AnomalySchema = new mongoose.Schema({
     originalUrl: {type: String, required: true},
-    processedUrl: {type: String, default: null},
+    videoName: {type: String, required: true},
     isAnomaly: {type: Boolean, default: null},
+    accuracy: {type: Number, default: null},
 }, {timestamps: true});
 
 export const AnomalyModel = mongoose.model('Anomaly', AnomalySchema);

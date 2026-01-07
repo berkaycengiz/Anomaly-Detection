@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { createAnomaly } from "../services/uploadService";
 import { Sidebar } from "../layouts/Sidebar";
 import { animate, AnimatePresence, motion } from "framer-motion";
 import { FaUpload } from "react-icons/fa6";
@@ -7,11 +8,13 @@ import { IoIosArrowForward } from "react-icons/io";
 import SubmitButton from "../components/SubmitButton";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
+
 const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CHECK' | 'HISTORY'>('CHECK');
   const [isSnapping, setIsSnapping] = useState(true);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeCard, setActiveCard] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -89,6 +92,7 @@ const Home: React.FC = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setVideoUrl(url);
 
@@ -103,11 +107,13 @@ const Home: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!videoUrl) return;
+    if (!selectedFile) {
+      setError("Please select a file");
+      return;
+    }
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
+      await createAnomaly(selectedFile);
       setIsLoading(false);
       setActiveCard(2);
       setPreviewVideo(null);
@@ -122,7 +128,10 @@ const Home: React.FC = () => {
     setActiveCard(1);
     setPreviewVideo(null);
     setVideoUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -159,10 +168,10 @@ const Home: React.FC = () => {
           {activeCard === 1 ? (
             <motion.div
               key="card1"
-              initial={{ opacity: 0, x: -50 }}
+              initial={{ opacity: 0, x: -100 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
               className="w-full flex flex-col md:max-w-lg max-w-sm"
             >
               <div className="bg-card aspect-square rounded-md border border-text/20 flex items-center justify-center group cursor-pointer p-4"
@@ -209,10 +218,10 @@ const Home: React.FC = () => {
           ) : (
             <motion.div
               key="card2"
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 50 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              exit={{ opacity: 0, x: 100 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
               className="w-full flex flex-col md:max-w-lg max-w-sm"
             >
               <div className="bg-card aspect-3/4 md:aspect-square rounded-md border border-text/20 flex flex-col items-center p-4 gap-4">
@@ -230,7 +239,6 @@ const Home: React.FC = () => {
                       src={videoUrl}
                       controls
                       className="absolute inset-0 w-full h-full object-contain"
-                      autoPlay
                     />
                   )}
                 </div>
