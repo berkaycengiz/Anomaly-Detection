@@ -1,15 +1,26 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { createAnomaly } from "../services/uploadService";
+import { useAlert } from "../layouts/Alert";
 import { Sidebar } from "../layouts/Sidebar";
 import { animate, AnimatePresence, motion } from "framer-motion";
 import { FaUpload } from "react-icons/fa6";
 import NavigationButton from "../components/NavigationButton";
-import { IoIosArrowForward } from "react-icons/io";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import SubmitButton from "../components/SubmitButton";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { getAnomalies } from "../services/getAnomaliesService";
+
+interface AnomalyData {
+  _id: string;
+  videoName: string;
+  anomaly: boolean;
+  accuracy: number;
+  timestamp: string;
+}
 
 
 const Home: React.FC = () => {
+  const [anomalies, setAnomalies] = useState<AnomalyData[]>([]);
   const [activeTab, setActiveTab] = useState<'CHECK' | 'HISTORY'>('CHECK');
   const [isSnapping, setIsSnapping] = useState(true);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
@@ -17,7 +28,12 @@ const Home: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeCard, setActiveCard] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [historyPage, setHistoryPage] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { showAlert } = useAlert();
+
+  const ITEMS_PER_PAGE = isMobile ? 2 : 4;
 
   const isNavigating = useRef(false);
 
@@ -25,6 +41,28 @@ const Home: React.FC = () => {
   const checkRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const anomalies = await getAnomalies();
+        setAnomalies(anomalies);
+      }
+      catch (err: any) {
+        console.error(err);
+      }
+    };
+
+    loadPosts();
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setHistoryPage(0);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleNavigate = (target: 'CHECK' | 'HISTORY') => {
     isNavigating.current = true;
@@ -108,19 +146,20 @@ const Home: React.FC = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError("Please select a file");
+      showAlert("Please select a file", "error");
       return;
     }
     setIsLoading(true);
     try {
       await createAnomaly(selectedFile);
+      showAlert("Video successfully uploaded.", "success");
       setIsLoading(false);
       setActiveCard(2);
       setPreviewVideo(null);
     }
     catch (err: any) {
       setIsLoading(false);
-      setError(err);
+      showAlert(err || "An unknown error occurred", "error");
     }
   };
 
@@ -133,6 +172,42 @@ const Home: React.FC = () => {
       fileInputRef.current.value = "";
     }
   };
+
+  const totalPages = Math.ceil(anomalies.length / ITEMS_PER_PAGE);
+  const displayedAnomalies = anomalies.slice(
+    historyPage * ITEMS_PER_PAGE,
+    (historyPage + 1) * ITEMS_PER_PAGE
+  );
+
+  const handlePrevPage = () => {
+    if (historyPage > 0) {
+      setDirection(-1);
+      setHistoryPage(prev => prev - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (historyPage < totalPages - 1) {
+      setDirection(1);
+      setHistoryPage(prev => prev + 1);
+    }
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 100 : -100,
+      opacity: 0
+    }),
+    center: {
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 100 : -100,
+      opacity: 0
+    })
+  };
+
 
   return (
     <div
@@ -265,16 +340,65 @@ const Home: React.FC = () => {
 
       <section
         ref={historyRef}
-        className="h-dvh w-full flex items-center justify-center pl-18 pr-18 md:pl-24 md:pr-24 xl:pl-32 xl:pr-32 snap-start"
+        className="h-dvh w-full flex flex-col items-center justify-center pl-18 pr-18 md:pl-24 md:pr-24 xl:pl-32 xl:pr-32 snap-start overflow-hidden"
       >
-        <div className="w-full max-w-5xl">
-          <div className="grid grid-cols-2 gap-8 w-full">
-            <div className="h-48 bg-primary rounded-sm border border-zinc-800 flex items-center justify-center">
-              <span className="text-zinc-700 font-mono text-xs italic">Record_001.data</span>
-            </div>
-            <div className="h-48 bg-primary rounded-sm border border-zinc-800 flex items-center justify-center">
-              <span className="text-zinc-700 font-mono text-xs italic">Record_002.data</span>
-            </div>
+        <div className="w-full max-w-7xl flex flex-col items-center justify-center gap-4 md:gap-8">
+
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={historyPage}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="grid gap-6 w-full max-w-4xl h-auto md:h-150 grid-cols-1 md:grid-cols-2"
+            >
+              {displayedAnomalies.map((item, i) => (
+                <div key={item._id || i} className="bg-card rounded-lg border border-text/20 hover:border-highlight/50 transition-all duration-300 flex flex-col items-center justify-center relative group cursor-pointer p-6 hover:bg-white/5">
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px] ${item.anomaly ? 'bg-error shadow-error' : 'bg-success shadow-success'}`}></div>
+                    <span className={`text-[10px] uppercase tracking-wider ${item.anomaly ? 'text-error' : 'text-text/40'}`}>
+                      {item.anomaly ? 'Anomaly' : 'Normal'}
+                    </span>
+                  </div>
+
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${item.anomaly
+                    ? 'bg-error/10 text-error group-hover:bg-error/20'
+                    : 'bg-text/5 text-text/60 group-hover:bg-highlight/10 group-hover:text-highlight'
+                    }`}>
+                    <span className="font-heading font-bold text-lg">{(item.accuracy * 100).toFixed(0)}%</span>
+                  </div>
+
+                  <span className="text-text/80 font-mono text-sm group-hover:text-white transition-colors truncate max-w-[80%] text-center" title={item.videoName}>
+                    {item.videoName}
+                  </span>
+                  <span className="text-text/40 text-xs mt-2">
+                    {new Date(item.timestamp).toLocaleString(undefined, {
+                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              ))}
+              {anomalies.length === 0 && (
+                <div className="col-span-full flex flex-col items-center justify-center h-64 text-text/40">
+                  <span>No history found</span>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="flex items-center gap-8 mt-4">
+            <NavigationButton onClick={handlePrevPage} disabled={historyPage === 0}>
+              <IoIosArrowBack size={20} />
+            </NavigationButton>
+
+            <span className="text-text/40 text-sm font-mono">{historyPage + 1} / {totalPages || 1}</span>
+
+            <NavigationButton onClick={handleNextPage} disabled={historyPage >= totalPages - 1}>
+              <IoIosArrowForward size={20} />
+            </NavigationButton>
           </div>
         </div>
       </section>
