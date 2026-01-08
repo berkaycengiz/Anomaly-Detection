@@ -69,7 +69,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, data }) => {
                         <div className="p-4 flex items-center justify-between bg-card border-t border-text/20">
                             <div className="flex flex-col">
                                 <span className="text-text/60 text-[10px] uppercase tracking-wider">Accuracy</span>
-                                <span className="text-text font-mono text-lg font-bold">{(data.accuracy).toFixed(1)}%</span>
+                                <span className="text-text font-mono text-lg font-bold">{(Number(data.accuracy)|| 0).toFixed(1)}%</span>
                             </div>
                             <div className="flex flex-col items-end">
                                 <span className="text-text/60 text-[10px] uppercase tracking-wider">Date</span>

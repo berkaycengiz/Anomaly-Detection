@@ -381,11 +381,11 @@ const Home: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-colors duration-300 ${item.isAnomaly
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 transition-colors duration-300 ${item.isAnomaly
                     ? 'bg-error/10 text-error group-hover:bg-error/20'
                     : 'bg-success/10 text-success group-hover:bg-success/20'
                     }`}>
-                    <span className="font-heading font-bold text-lg">{(item.accuracy)}%</span>
+                    <span className="font-heading font-bold text-lg">{(Number(item.accuracy)|| 0).toFixed(1)}%</span>
                   </div>
 
                   <span className="text-text/80 font-mono text-sm group-hover:text-white transition-colors truncate max-w-[80%] text-center" title={item.videoName}>
