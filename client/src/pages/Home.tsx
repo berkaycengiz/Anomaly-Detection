@@ -9,15 +9,16 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import SubmitButton from "../components/SubmitButton";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { getAnomalies } from "../services/getAnomaliesService";
+import VideoModal from "../components/VideoModal";
 
 interface AnomalyData {
   _id: string;
+  originalUrl: string;
   videoName: string;
-  anomaly: boolean;
+  isAnomaly: boolean;
   accuracy: number;
-  timestamp: string;
+  createdAt: string;
 }
-
 
 const Home: React.FC = () => {
   const [anomalies, setAnomalies] = useState<AnomalyData[]>([]);
@@ -31,6 +32,8 @@ const Home: React.FC = () => {
   const [historyPage, setHistoryPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { showAlert } = useAlert();
 
   const ITEMS_PER_PAGE = isMobile ? 2 : 4;
@@ -153,6 +156,8 @@ const Home: React.FC = () => {
     try {
       await createAnomaly(selectedFile);
       showAlert("Video successfully uploaded.", "success");
+      const updatedAnomalies = await getAnomalies();
+      setAnomalies(updatedAnomalies);
       setIsLoading(false);
       setActiveCard(2);
       setPreviewVideo(null);
@@ -193,6 +198,11 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleAnomalyClick = (item: AnomalyData) => {
+    setSelectedAnomaly(item);
+    setIsModalOpen(true);
+  };
+
   const variants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 100 : -100,
@@ -215,8 +225,15 @@ const Home: React.FC = () => {
       onScroll={handleScroll}
       className={`h-dvh overflow-y-auto bg-linear-to-t no-scrollbar from-background from-0% to-[#242323] bg-local ${isSnapping ? 'snap-y snap-mandatory' : ''}`}
     >
+      <VideoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        data={selectedAnomaly}
+      />
 
-      <Sidebar activeTab={activeTab} onNavigate={handleNavigate} />
+      <div className={isModalOpen ? 'hidden' : 'contents'}>
+        <Sidebar activeTab={activeTab} onNavigate={handleNavigate} />
+      </div>
 
       <div className="fixed h-full w-16 md:w-24 xl:w-32 flex items-center justify-center pointer-events-none z-10">
         <div className="rotate-180 [writing-mode:vertical-lr] flex items-center justify-center">
@@ -323,10 +340,6 @@ const Home: React.FC = () => {
                     <span className="text-text/60 text-[10px] uppercase tracking-wider">Accuracy</span>
                     <span className="text-text font-mono text-sm">98.4%</span>
                   </div>
-                  {/* <div className="flex flex-col items-end">
-                    <span className="text-text/40 text-[10px] uppercase tracking-wider">Duration</span>
-                    <span className="text-text font-mono text-sm">00:12</span>
-                  </div> */}
                 </div>
               </div>
 
@@ -342,7 +355,7 @@ const Home: React.FC = () => {
         ref={historyRef}
         className="h-dvh w-full flex flex-col items-center justify-center pl-18 pr-18 md:pl-24 md:pr-24 xl:pl-32 xl:pr-32 snap-start overflow-hidden"
       >
-        <div className="w-full max-w-7xl flex flex-col items-center justify-center gap-4 md:gap-8">
+        <div className="w-full max-w-7xl flex flex-col items-center justify-center gap-8">
 
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -353,29 +366,33 @@ const Home: React.FC = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="grid gap-6 w-full max-w-4xl h-auto md:h-150 grid-cols-1 md:grid-cols-2"
+              className="grid gap-6 w-full max-w-4xl h-90 md:h-120 grid-cols-1 md:grid-cols-2"
             >
               {displayedAnomalies.map((item, i) => (
-                <div key={item._id || i} className="bg-card rounded-lg border border-text/20 hover:border-highlight/50 transition-all duration-300 flex flex-col items-center justify-center relative group cursor-pointer p-6 hover:bg-white/5">
+                <div
+                  key={item._id || i}
+                  onClick={() => handleAnomalyClick(item)}
+                  className="bg-card rounded-lg border border-text/20 hover:border-highlight/50 transition-all duration-300 flex flex-col items-center justify-center relative group cursor-pointer p-6 hover:bg-white/5"
+                >
                   <div className="absolute top-4 right-4 flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px] ${item.anomaly ? 'bg-error shadow-error' : 'bg-success shadow-success'}`}></div>
-                    <span className={`text-[10px] uppercase tracking-wider ${item.anomaly ? 'text-error' : 'text-text/40'}`}>
-                      {item.anomaly ? 'Anomaly' : 'Normal'}
+                    <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${item.isAnomaly ? 'bg-error shadow-error' : 'bg-success shadow-success'}`}></div>
+                    <span className={`text-[10px] uppercase tracking-wider ${item.isAnomaly ? 'text-error' : 'text-success'}`}>
+                      {item.isAnomaly ? 'Anomaly' : 'Normal'}
                     </span>
                   </div>
 
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${item.anomaly
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-colors duration-300 ${item.isAnomaly
                     ? 'bg-error/10 text-error group-hover:bg-error/20'
-                    : 'bg-text/5 text-text/60 group-hover:bg-highlight/10 group-hover:text-highlight'
+                    : 'bg-success/10 text-success group-hover:bg-success/20'
                     }`}>
-                    <span className="font-heading font-bold text-lg">{(item.accuracy * 100).toFixed(0)}%</span>
+                    <span className="font-heading font-bold text-lg">{(item.accuracy)}%</span>
                   </div>
 
                   <span className="text-text/80 font-mono text-sm group-hover:text-white transition-colors truncate max-w-[80%] text-center" title={item.videoName}>
                     {item.videoName}
                   </span>
                   <span className="text-text/40 text-xs mt-2">
-                    {new Date(item.timestamp).toLocaleString(undefined, {
+                    {new Date(item.createdAt).toLocaleString(undefined, {
                       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     })}
                   </span>
@@ -389,7 +406,7 @@ const Home: React.FC = () => {
             </motion.div>
           </AnimatePresence>
 
-          <div className="flex items-center gap-8 mt-4">
+          <div className="flex items-center gap-8">
             <NavigationButton onClick={handlePrevPage} disabled={historyPage === 0}>
               <IoIosArrowBack size={20} />
             </NavigationButton>
