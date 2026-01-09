@@ -2,6 +2,7 @@ import express from 'express';
 import {getAnomalyById, getAnomalies, createAnomaly, updateAnomaly} from '../db/anomalies';
 import { uploadFromBuffer } from '../helpers/cloudinaryHelper';
 import { UploadApiOptions } from 'cloudinary';
+import axios from 'axios';
 
 export const getAnomaly = async (req: express.Request, res: express.Response): Promise<any> => {
     try{
@@ -36,6 +37,13 @@ export const newAnomaly = async (req: express.Request, res: express.Response): P
             originalUrl: videoUrl,
             videoName: videoName,
         });
+
+        axios.post(`${process.env.FASTAPI_URL}/analyze`, {
+            id: anomaly._id,
+            videoUrl: videoUrl
+        })
+        .then(() => console.log(`FastAPI analysis started for: ${anomaly._id}`))
+        .catch(err => console.error("FastAPI Error:", err.message));
 
         return res.status(200).json(anomaly);
     }

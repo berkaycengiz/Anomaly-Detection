@@ -6,7 +6,17 @@ export const getAnomalies = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/anomalies`);
         return response.data;
-    } 
+    }
+    catch (error: any) {
+        throw error.response?.data?.message || "An unknown error occured!";
+    }
+};
+
+export const getAnomalyById = async (id: string) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/anomaly/${id}`);
+        return response.data;
+    }
     catch (error: any) {
         throw error.response?.data?.message || "An unknown error occured!";
     }

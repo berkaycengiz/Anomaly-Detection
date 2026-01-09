@@ -8,7 +8,7 @@ import NavigationButton from "../components/NavigationButton";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import SubmitButton from "../components/SubmitButton";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { getAnomalies } from "../services/getAnomaliesService";
+import { getAnomalies, getAnomalyById } from "../services/getAnomaliesService";
 import VideoModal from "../components/VideoModal";
 
 interface AnomalyData {
@@ -33,6 +33,7 @@ const Home: React.FC = () => {
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyData | null>(null);
+  const [currentAnomalyResult, setCurrentAnomalyResult] = useState<AnomalyData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showAlert } = useAlert();
 
@@ -154,10 +155,25 @@ const Home: React.FC = () => {
     }
     setIsLoading(true);
     try {
-      await createAnomaly(selectedFile);
-      showAlert("Video successfully uploaded.", "success");
+      const createdAnomaly = await createAnomaly(selectedFile);
+      let isAnalysisComplete = false;
+      let finalAnomaly = null;
+
+      while (!isAnalysisComplete) {
+        const currentStatus = await getAnomalyById(createdAnomaly._id);
+        if (currentStatus && currentStatus.accuracy !== null) {
+          isAnalysisComplete = true;
+          finalAnomaly = currentStatus;
+        } 
+        else {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      showAlert("Video successfully uploaded and analyzed.", "success");
       const updatedAnomalies = await getAnomalies();
       setAnomalies(updatedAnomalies);
+      setCurrentAnomalyResult(finalAnomaly);
       setIsLoading(false);
       setActiveCard(2);
       setPreviewVideo(null);
@@ -173,6 +189,7 @@ const Home: React.FC = () => {
     setPreviewVideo(null);
     setVideoUrl(null);
     setSelectedFile(null);
+    setCurrentAnomalyResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -320,8 +337,10 @@ const Home: React.FC = () => {
                 <div className="w-full flex items-center justify-between border-b border-text/20 pb-4">
                   <span className="text-text/60 text-xs uppercase tracking-widest">Status</span>
                   <div className="flex items-center gap-2 pointer-events-none">
-                    <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px] shadow-success"></div>
-                    <span className="text-success font-heading font-bold tracking-wider text-sm">NORMAL</span>
+                    <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${currentAnomalyResult?.isAnomaly ? 'bg-error shadow-error' : 'bg-success shadow-success'}`}></div>
+                    <span className={`font-heading font-bold tracking-wider text-sm ${currentAnomalyResult?.isAnomaly ? 'text-error' : 'text-success'}`}>
+                      {currentAnomalyResult?.isAnomaly ? 'ANOMALY' : 'NORMAL'}
+                    </span>
                   </div>
                 </div>
 
@@ -337,8 +356,10 @@ const Home: React.FC = () => {
 
                 <div className="w-full flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-text/60 text-[10px] uppercase tracking-wider">Accuracy</span>
-                    <span className="text-text font-mono text-sm">98.4%</span>
+                    <span className="text-text/60 text-[10px] uppercase tracking-wider">Violence</span>
+                    <span className="text-text font-mono text-sm">
+                      {currentAnomalyResult?.accuracy ? `${Number(currentAnomalyResult.accuracy || 0).toFixed(1)}%` : '-%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -385,7 +406,7 @@ const Home: React.FC = () => {
                     ? 'bg-error/10 text-error group-hover:bg-error/20'
                     : 'bg-success/10 text-success group-hover:bg-success/20'
                     }`}>
-                    <span className="font-heading font-bold text-lg">{(Number(item.accuracy)|| 0).toFixed(1)}%</span>
+                    <span className="font-heading font-bold text-lg">{(Number(item.accuracy) || 0).toFixed(1)}%</span>
                   </div>
 
                   <span className="text-text/80 font-mono text-sm group-hover:text-white transition-colors truncate max-w-[80%] text-center" title={item.videoName}>
