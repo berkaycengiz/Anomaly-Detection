@@ -1,0 +1,7 @@
+name: visea-venv
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - spyder-kernels=3.0
+prefix: C:\Users\Win10\anaconda3\envs\visea-venv

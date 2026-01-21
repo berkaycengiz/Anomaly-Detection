@@ -11,10 +11,10 @@ def main():
     ap.add_argument("--video_path", type=str, default="C:\\Users\\Win10\\Videos\\2025-12-23 07-10-00.mkv")
     ap.add_argument("--ckpt", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\checkpoints\\TrueTrueFalsebest_model.pth")
 
-    ap.add_argument("--milnce_model_dir", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\third_party\\milnce-i3d")
-    ap.add_argument("--vggish_dir", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\third_party\\vggish")
-    ap.add_argument("--vggish_ckpt", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\third_party\\vggish\\checkpoints\\vggish_model.ckpt")
-    ap.add_argument("--ffmpeg_path", type=str, default="D:\\Yedek\\JS\\Anomaly-Detection\\pyService\\Smart-City-Violation-Detection\\ffmpeg.exe")
+    ap.add_argument("--milnce_model_dir", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\extraction\\milnce-i3d")
+    ap.add_argument("--vggish_dir", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\extraction\\vggish")
+    ap.add_argument("--vggish_ckpt", type=str, default="C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\extraction\\vggish\\checkpoints\\vggish_model.ckpt")
+    ap.add_argument("--ffmpeg_path", type=str, default="ffmpeg")
 
     ap.add_argument("--threshold", type=float, default=0.35)
     ap.add_argument("--device", type=str, default="cuda")

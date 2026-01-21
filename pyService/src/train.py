@@ -1,3 +1,4 @@
+from sympy import factor
 from dataset import XDViolenceDataset
 from model import MultiAgentViolanceModel
 from torch.utils.data import DataLoader
@@ -12,36 +13,64 @@ import matplotlib.pyplot as plt
 
 root_dir = "C:\\Users\\Win10\\Desktop\\DeepLearning\\Project\\Smart-City-Violation-Detection\\data\\XDViolance"
 batch_size = 8
-num_epochs = 40
-learning_rate = 1e-4
+num_epochs = 50
+learning_rate = 3e-4
 rgb_data = True
 flow_data = False
 audio_data = True
-train_size = 19770  # Set to 3000 for quick testing, set to 19770 for full training
+train_size = 19770  # Set to lower values for quick testing, set to 19770 for full training
 test_size = 4000
+
+patience = 5
+counter = 0
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model_chk_dir = "checkpoints"
 os.makedirs(model_chk_dir, exist_ok=True)
 
-train_dataset = XDViolenceDataset(root_dir, split="train", data_size=train_size, is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data)
-test_dataset = XDViolenceDataset(root_dir, split="test", data_size=test_size, is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data)
-
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset,batch_size=batch_size, shuffle=False)
-
-model = MultiAgentViolanceModel(is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data).to(device)
-
-criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=1e-5)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, patience=5)
+#for LambdaLR Scheduler
+#def lr_lambda(epoch):
+#    if epoch < 3:
+#        return 0.2
+#    elif epoch < 6:
+#        return 0.5
+#    else:
+#        return 1.0
 
 def train_model():
+
+    train_dataset = XDViolenceDataset(root_dir, split="train", data_size=train_size, is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data)
+    test_dataset = XDViolenceDataset(root_dir, split="test", data_size=test_size, is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset,batch_size=batch_size, shuffle=False)
+
+    # Weighted loss for imbalanced dataset
+    train_labels = [train_dataset._parse_label(vid).item() for vid in train_dataset.video_ids]
+    num_pos = sum(train_labels)
+    num_neg = len(train_labels) - num_pos
+    pos_weight = torch.tensor([num_neg / num_pos]).to(device)
+
+    model = MultiAgentViolanceModel(is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data).to(device)
+
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=1e-5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, mode="max", factor=0.5, patience=3)
 
     best_auc = 0.0
 
     for epoch in range(num_epochs):
+
+        #if epoch == 10:
+        #    learning_rate = learning_rate / 10
+        #    for param_group in optimizer.param_groups:
+        #        param_group['lr'] = learning_rate
+        
+        #if epoch == 30:
+        #    learning_rate = learning_rate / 10
+        #    for param_group in optimizer.param_groups:
+        #        param_group['lr'] = learning_rate
 
         epoch_train_loss, epoch_val_loss = 0.0, 0.0
         val_outputs_list = []
@@ -90,18 +119,26 @@ def train_model():
         accuracy = accuracy_score(np.array(val_labels_list), np.array(val_outputs_list) > threshold)
         roc_auc = roc_auc_score(val_labels_list, val_outputs_list)
         f1 = f1_score(np.array(val_labels_list), np.array(val_outputs_list) > threshold)
-        scheduler.step(epoch_val_loss)
+        scheduler.step(roc_auc)
         
-        print(f"Epoch {epoch+1}/{num_epochs} | Train Loss: {epoch_train_loss:.4f} | Val Loss: {epoch_val_loss:.4f} | Acc: {accuracy:.4f} | AUC: {roc_auc:.4f} | F1: {f1:.4f}")
-        
+        lr = optimizer.param_groups[0]['lr']
+
+        print(f"Epoch {epoch+1}/{num_epochs} | Train Loss: {epoch_train_loss:.4f} | Val Loss: {epoch_val_loss:.4f} | Acc: {accuracy:.4f} | AUC: {roc_auc:.4f} | F1: {f1:.4f} | LR: {lr:.6f}")
+
         if roc_auc > best_auc:
             best_auc = roc_auc
             model_name = str(model.is_audio) + str(model.is_visual) + str(model.is_motion) + "best_model.pth"
             torch.save(model.state_dict(), os.path.join(model_chk_dir, model_name))
             print("Best model saved.")
+        else:
+            counter += 1
+            if counter > patience:
+                print("Early Stopping")
+                break
+
 
 if __name__ == "__main__":
-    train_model()
+    #train_model()
 
     #Load best model for testing
     model = MultiAgentViolanceModel(is_audio=audio_data, is_visual=rgb_data, is_motion=flow_data).to(device)
@@ -115,7 +152,7 @@ if __name__ == "__main__":
     print(Counter(labels))
 
     model.eval()
-    threshold = 0.35
+    threshold = 0.53
 
     val_outputs_list = []
     val_labels_list = []

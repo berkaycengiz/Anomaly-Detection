@@ -55,11 +55,18 @@ class ViolenceInferenceService:
         rgb_avg = self._avg_5crop(rgb_5) if self.inf_cfg.is_visual else None
         aud_x = aud if self.inf_cfg.is_audio else None
 
+        print(f"Extracted features for {video_path}:")
+        print(f"  RGB shape: {rgb_avg.shape if rgb_avg is not None else None}")
+        print(f"  Audio shape: {aud_x.shape if aud_x is not None else None}")
+
         audio_t = None if aud_x is None else self._to_bt(aud_x)
         rgb_t = None if rgb_avg is None else self._to_bt(rgb_avg)
         flow_t = None  # flow features doesn't add much but takes so much time to extract so we skip it
 
         logits = self.model(audio=audio_t, rgb=rgb_t, flow=flow_t)
+
+        print(f"Shapes after model inference:")
+        print(f"  Logits shape: {logits.shape}")
 
         if logits.dim() == 2 and logits.shape[0] == 1 and logits.shape[1] == 1:
             logits = logits.view(1)

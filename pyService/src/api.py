@@ -15,7 +15,7 @@ app = FastAPI(title="Smart City Violation Detection API")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHECKPOINT_PATH = os.path.join(BASE_DIR, "checkpoints", "TrueTrueFalsebest_model.pth")
-THIRD_PARTY_DIR = os.path.join(BASE_DIR, "third_party")
+THIRD_PARTY_DIR = os.path.join(BASE_DIR, "feature_extract")
 
 FEAT_CFG = FeatureExtractorConfig(
     milnce_model_dir=os.path.join(THIRD_PARTY_DIR, "milnce-i3d"),
@@ -27,7 +27,7 @@ FEAT_CFG = FeatureExtractorConfig(
 INF_CFG = InferenceConfig(
     ckpt_path=CHECKPOINT_PATH,
     device="cuda" if torch.cuda.is_available() else "cpu",
-    threshold=0.35
+    threshold=0.53
 )
 
 service = ViolenceInferenceService(FEAT_CFG, INF_CFG)
