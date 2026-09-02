@@ -112,30 +112,35 @@ The AI engine in `pyService/src/model.py` is implemented using a custom **MultiA
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Exact Dependencies
 
-### Frontend
-- **Framework:** React 19 (`react`, `react-dom`)
-- **Build Tool:** Vite 7
-- **Language:** TypeScript 5.9
-- **Styling:** Tailwind CSS 4, PostCSS, Autoprefixer
-- **Animations & UX:** Framer Motion 12, `@studio-freight/lenis` (smooth scrolling), `react-icons`
-- **Networking:** Axios, React Router DOM 7
+### Frontend (`client/package.json`)
+- **UI Framework:** React `^19.2.0` (`react`, `react-dom`)
+- **Build Tool:** Vite `^7.2.4` (`@vitejs/plugin-react ^5.1.1`)
+- **Language:** TypeScript `~5.9.3`
+- **Styling:** Tailwind CSS `^4.1.18` (`@tailwindcss/vite ^4.1.18`, `@tailwindcss/postcss ^4.1.18`, PostCSS `^8.5.6`, Autoprefixer `^10.4.23`)
+- **Motion & Smooth Scroll:** Framer Motion `^12.23.26`, `@studio-freight/lenis ^1.0.42`
+- **Routing & Icons:** React Router DOM `^7.11.0`, React Icons `^5.5.0`
+- **HTTP Client:** Axios `^1.13.2`
+- **Linting:** ESLint `^9.39.1`
 
-### Backend API
+### Backend API (`server/package.json`)
 - **Runtime:** Node.js (v18+)
-- **Framework:** Express 5
-- **Language:** TypeScript 5.9 (`ts-node`, `ts-node-dev`, `nodemon`)
-- **Database:** MongoDB via Mongoose 9
-- **Media Upload:** Multer, Streamifier, Cloudinary SDK v2
-- **Utilities:** `cors`, `dotenv`, `compression`, `cookie-parser`, `body-parser`
+- **Server Framework:** Express `^5.2.1`
+- **Database & ODM:** MongoDB `^7.0.0`, Mongoose `^9.0.2`
+- **Cloud Media Management:** Cloudinary SDK `^2.8.0`, Multer `^2.0.2`, Streamifier `^0.1.1`
+- **HTTP & Utilities:** Axios `^1.13.2`, CORS `^2.8.5`, Compression `^1.8.1`, Cookie-Parser `^1.4.7`, Body-Parser `^2.2.1`, Dotenv `^17.2.3`
+- **Development Tooling:** TypeScript `^5.9.3`, ts-node `^10.9.2`, ts-node-dev `^2.0.0`, Nodemon `^3.1.11`
 
-### AI / Microservice
-- **Framework:** FastAPI, Uvicorn
-- **Deep Learning:** PyTorch, TorchVision
-- **Audio Extraction:** VGGish, FFMPEG
-- **Visual Extraction:** MIL-NCE (I3D backbone), OpenCV (`cv2`), TensorFlow (for feature extractors)
-- **Scientific Computing:** NumPy, Scikit-Learn, Matplotlib
+### Root Orchestrator (`package.json`)
+- **Process Manager:** Concurrently `^9.2.1`
+
+### AI / Deep Learning Service (`pyService`)
+- **Web API:** FastAPI `0.100+`, Uvicorn, Pydantic, HTTPX
+- **Deep Learning Framework:** PyTorch `2.0+`, TorchVision
+- **Feature Extractors:** MIL-NCE (I3D backbone for video), VGGish (TensorFlow & `tf_slim` for 128-d audio)
+- **Audio/Video Processing:** FFMPEG, OpenCV (`opencv-python`), Resampy, SoundFile
+- **Evaluation & Analytics:** Scikit-Learn (ROC-AUC, Confusion Matrix, F1), NumPy, Matplotlib, SymPy
 
 ---
 
@@ -295,8 +300,8 @@ conda activate visea-venv
 # If PyTorch with CUDA support is required (Recommended for GPU):
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
-# Ensure other required libraries are installed
-pip install fastapi uvicorn httpx opencv-python pydantic scikit-learn
+# Install all microservice, feature extraction & training dependencies:
+pip install fastapi uvicorn httpx pydantic opencv-python tensorflow tf_slim resampy soundfile scikit-learn matplotlib sympy
 ```
 
 > **Note on Model Checkpoints:**
