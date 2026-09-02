@@ -67,25 +67,25 @@ In traditional city surveillance operations, human operators are overwhelmed by 
 
 ```mermaid
 flowchart TD
-    User([User / Operator]) -->|1. Upload Surveillance Video| Client[React 19 + Vite Web App]
-    Client -->|2. POST /anomaly (Multipart)| NodeServer[Node.js / Express API]
-    NodeServer -->|3. Upload Video Stream| Cloudinary[(Cloudinary Cloud Storage)]
-    Cloudinary -->|4. Return Secure Video URL| NodeServer
-    NodeServer -->|5. Save Initial Record| MongoDB[(MongoDB Database)]
-    NodeServer -->|6. POST /analyze {id, videoUrl}| PyService[FastAPI AI Microservice]
+    User(["User / Operator"]) -->|"1. Upload Surveillance Video"| Client["React 19 + Vite Web App"]
+    Client -->|"2. POST /anomaly"| NodeServer["Node.js / Express API"]
+    NodeServer -->|"3. Upload Video Stream"| Cloudinary[("Cloudinary Cloud Storage")]
+    Cloudinary -->|"4. Return Secure Video URL"| NodeServer
+    NodeServer -->|"5. Save Initial Record"| MongoDB[("MongoDB Database")]
+    NodeServer -->|"6. POST /analyze"| PyService["FastAPI AI Microservice"]
     
-    subgraph PyService Pipeline
-        PyService -->|7. Download Video & Extract Audio via FFMPEG| FFMPEG[FFMPEG]
-        FFMPEG -->|16kHz Mono WAV| VGGish[VGGish Audio Extractor]
-        FFMPEG -->|24 FPS RGB Frames| I3D[MIL-NCE / I3D Visual Extractor]
-        VGGish -->|128-d Feature Vector| MultiAgent[Multi-Agent Fusion Model]
-        I3D -->|1024-d Feature Vector| MultiAgent
-        MultiAgent -->|Compute Violence Score & Threshold 0.53| Decision[Inference Decision Engine]
+    subgraph PyServicePipeline["PyService Pipeline"]
+        PyService -->|"7. Download & Extract Audio/Video"| FFMPEG["FFMPEG"]
+        FFMPEG -->|"16kHz Mono WAV"| VGGish["VGGish Audio Extractor"]
+        FFMPEG -->|"24 FPS RGB Frames"| I3D["MIL-NCE / I3D Visual Extractor"]
+        VGGish -->|"128-d Feature Vector"| MultiAgent["Multi-Agent Fusion Model"]
+        I3D -->|"1024-d Feature Vector"| MultiAgent
+        MultiAgent -->|"Compute Score (Threshold 0.53)"| Decision["Inference Decision Engine"]
     end
     
-    Decision -->|8. PATCH /anomaly/:id {isAnomaly, accuracy}| NodeServer
-    NodeServer -->|9. Update Record| MongoDB
-    Client -.->|10. Poll / Fetch Logs| NodeServer
+    Decision -->|"8. PATCH /anomaly/:id"| NodeServer
+    NodeServer -->|"9. Update Record"| MongoDB
+    Client -.->|"10. Poll / Fetch Logs"| NodeServer
 ```
 
 ---
